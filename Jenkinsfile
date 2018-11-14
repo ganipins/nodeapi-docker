@@ -1,4 +1,13 @@
 pipeline {
+
+   tools {
+      def dockerHome = tool 'localDocker'
+      def mavenHome  = tool 'localMaven'
+      def nodeHome  = tool 'localNodeJS'
+
+      env.PATH = "${nodeHome}/bin:${dockerHome}/bin:${mavenHome}/bin:${env.PATH}"
+    }
+
     environment {
       DOCKER = credentials('docker-hub')
     }
