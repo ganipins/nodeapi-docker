@@ -8,7 +8,6 @@ pipeline {
   stages {
      stage('Setup Environment') {
        steps {
-           echo 'Environment...'    
            echo "env PATH is: ${env.PATH}"
            echo "Starting Build, triggered by ${env.BRANCH_NAME}";
            echo "Building ${env.BUILD_ID}";
@@ -31,13 +30,14 @@ pipeline {
     }
 
     stage('Deploy Docker Image') {
-      if(env.BRANCH_NAME == 'master') {
-        echo 'Deploying Docker Image ...'
-        sh 'docker stop ganipins/nodeapi-docker:1.0.0'
-        sh 'docker rmi ganipins/nodeapi-docker:1.0.0'
-        sh 'docker run -p 3000:3000 --d --name nodeapi-docker ganipins/nodeapi-docker:1.0.0'
-      }
+        steps {
+            if(env.BRANCH_NAME == 'master') {
+                echo 'Deploying Docker Image ...'
+                sh 'docker stop ganipins/nodeapi-docker:1.0.0'
+                sh 'docker rmi ganipins/nodeapi-docker:1.0.0'
+                sh 'docker run -p 3000:3000 --d --name nodeapi-docker ganipins/nodeapi-docker:1.0.0'
+            }
+        }
     }
   }
-
 }
