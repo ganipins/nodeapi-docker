@@ -3,9 +3,13 @@ FROM node:11.1.0-alpine
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
+# Versions
+RUN npm -v
+RUN node -v
+
 COPY package.json /usr/src/app/
 RUN npm install --production --quiet && \
-       npm cache clean --force
+    npm cache clean --force
 
 COPY . /usr/src/app
 
