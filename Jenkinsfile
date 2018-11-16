@@ -35,12 +35,6 @@ pipeline {
        }
     }
 
-    stage('Test') {
-      steps {
-        sh 'npm test'
-      }
-    }
-
     stage('Build Docker Image') {
       steps {
          echo 'Building Docker Image ...'
