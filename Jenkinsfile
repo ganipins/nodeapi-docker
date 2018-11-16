@@ -1,21 +1,19 @@
 pipeline {
-
-   tools {
-      def dockerHome = tool 'localDocker'
-      def mavenHome  = tool 'localMaven'
-      def nodeHome  = tool 'localNodeJS'
-
-      env.PATH = "${nodeHome}/bin:${dockerHome}/bin:${mavenHome}/bin:${env.PATH}"
-    }
-
-    environment {
-      DOCKER = credentials('docker-hub')
-    }
-
+  environment {
+    registry = "gsambasiva/docker-test"
+    registryCredential = 'docker-hub'
+    dockerImage = ''
+  }
   agent any
-
+  tools {nodejs 'localNode' }
   stages {
-     stage('Setup Environment') {
+    stage('Cloning Git') {
+      steps {
+        git 'https://github.com/ganipins/nodeapi-docker.git'
+      }
+    }
+
+    stage('Setup Environment') {
        steps {
            echo "env PATH is: ${env.PATH}"
            echo "Starting Build, triggered by ${env.BRANCH_NAME}";
@@ -29,6 +27,18 @@ pipeline {
            sh 'npm -v'
            sh 'printenv'
        }
+    }
+
+    stage('Build') {
+       steps {
+         sh 'npm install'
+       }
+    }
+
+    stage('Test') {
+      steps {
+        sh 'npm test'
+      }
     }
 
     stage('Build Docker Image') {
