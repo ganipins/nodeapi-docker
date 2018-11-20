@@ -1,11 +1,22 @@
+#!/usr/bin/env groovy
+
 pipeline {
+
+  agent any
+
+  options {
+    timestamps()
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
   environment {
     registry = "gsambasiva/docker-test"
     registryCredential = 'docker-hub'
     dockerImage = ''
   }
-  agent any
+  
   tools {nodejs 'localNode' }
+
   stages {
     stage('Cloning Git') {
       steps {
@@ -35,23 +46,68 @@ pipeline {
        }
     }
 
+    stage('Docker clean-up') {
+       steps {
+         echo 'Docker clean-up ...'
+                script {
+                    try {
+                        echo 'stoping docker container'
+                        sh 'docker stop nodeapi-docker'
+                    }
+                    catch (exc) {
+                        echo 'stoping docker container failed!'
+                    }
+                }
+                script {
+                    try {
+                        echo 'removing docker container'
+                        sh 'docker container rm nodeapi-docker'
+                    }
+                    catch (exc) {
+                        echo 'removing docker container failed!'
+                    }
+                }
+          
+                script {
+                    try {
+                        echo 'removing docker image'
+                        sh 'docker rmi -f ganipins/nodeapi-docker:1.0.0'
+                    }
+                    catch (exc) {
+                        echo 'removing docker image failed!'
+                    }
+                }
+       }
+    }
+
     stage('Build Docker Image') {
       steps {
          echo 'Building Docker Image ...'
-         sh 'docker build -t ganipins/nodeapi-docker:1.0.0 --no-cache .'
+         sh "docker build -t ganipins/nodeapi-docker:1.0.0 --no-cache ."
+         withDockerRegistry([ credentialsId: "docker-hub", url: "" ]) {
+             //sh 'docker push ganipins/nodeapi-docker:1.0.0'
+         }
       }
     }
 
     stage('Deploy Docker Image') {
-        when {
-            branch 'master'
-        }
-        steps {
-            echo 'Deploying Docker Image ...'
-            sh 'docker stop ganipins/nodeapi-docker:1.0.0'
-            sh 'docker rmi ganipins/nodeapi-docker:1.0.0'
-            sh 'docker run -p 3000:3000 --d --name nodeapi-docker ganipins/nodeapi-docker:1.0.0'
-        }
+          steps {
+                script {
+                    try {
+                        echo 'create docker container'
+                        sh "docker run -d --rm -p 3000:3000 --name nodeapi-docker ganipins/nodeapi-docker:1.0.0"
+                    }
+                    catch (exc) {
+                        echo 'create docker container failed!'
+                    }
+                }
+          }
     }
+  }
+  post {
+     always {
+          cleanWs()
+	        echo 'Pipeline finished'
+     }
   }
 }
